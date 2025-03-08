@@ -121,13 +121,13 @@
             <ul>
                 <li>
                     <strong>SOS Run/Walk:</strong> A signature event where the community comes together to promote mental health awareness. 
-                    <form id="event-form-1" onsubmit="saveToGoogleSheets(event, 'SOS Run/Walk')">
+                    <form onsubmit="saveToCSV(event, 'SOS Run/Walk')">
                         <label>Name:</label>
-                        <input type="text" id="name-1" required>
+                        <input type="text" required>
                         <label>Email:</label>
-                        <input type="email" id="email-1" required>
+                        <input type="email" required>
                         <label>T-shirt Size:</label>
-                        <select id="size-1">
+                        <select>
                             <option value="S">Small</option>
                             <option value="M">Medium</option>
                             <option value="L">Large</option>
@@ -138,31 +138,31 @@
                 </li>
                 <li>
                     <strong>Adopt a Family:</strong> A holiday initiative matching families in need with donors.
-                    <form id="event-form-2" onsubmit="saveToGoogleSheets(event, 'Adopt a Family')">
+                    <form onsubmit="saveToCSV(event, 'Adopt a Family')">
                         <label>Name:</label>
-                        <input type="text" id="name-2" required>
+                        <input type="text" required>
                         <label>Email:</label>
-                        <input type="email" id="email-2" required>
+                        <input type="email" required>
                         <button type="submit">Sign Up</button>
                     </form>
                 </li>
                 <li>
                     <strong>Thanksgiving Drive:</strong> A community effort ensuring families can celebrate Thanksgiving.
-                    <form id="event-form-3" onsubmit="saveToGoogleSheets(event, 'Thanksgiving Drive')">
+                    <form onsubmit="saveToCSV(event, 'Thanksgiving Drive')">
                         <label>Name:</label>
-                        <input type="text" id="name-3" required>
+                        <input type="text" required>
                         <label>Email:</label>
-                        <input type="email" id="email-3" required>
+                        <input type="email" required>
                         <button type="submit">Sign Up</button>
                     </form>
                 </li>
                 <li>
                     <strong>Baby Essentials Drive:</strong> Focused on providing baby supplies like diapers and formula.
-                    <form id="event-form-4" onsubmit="saveToGoogleSheets(event, 'Baby Essentials Drive')">
+                    <form onsubmit="saveToCSV(event, 'Baby Essentials Drive')">
                         <label>Name:</label>
-                        <input type="text" id="name-4" required>
+                        <input type="text" required>
                         <label>Email:</label>
-                        <input type="email" id="email-4" required>
+                        <input type="email" required>
                         <button type="submit">Sign Up</button>
                     </form>
                 </li>
@@ -176,66 +176,40 @@
     </footer>
 
     <script>
-        // Your Google Sheets Spreadsheet ID
-        const spreadsheetId = '1RNtKEQSnmUg16_0anzZoko9i2K009ho8UC3EFlFy7a4'; // Replace with your actual Taekwondo sheet ID
-
-        function saveToGoogleSheets(event, eventName) {
+        function saveToCSV(event, eventName) {
             event.preventDefault(); // Prevent form submission
 
             // Get form values
-            const form = event.target;
-            const name = form.querySelector('input[type="text"]').value;
-            const email = form.querySelector('input[type="email"]').value;
-            const size = form.querySelector('select') ? form.querySelector('select').value : 'N/A';
+            const formElements = event.target.elements;
+            const name = formElements[0].value;
+            const email = formElements[1].value;
+            const sizeSelect = formElements.length > 2 ? formElements[2] : null;
+            const size = sizeSelect ? sizeSelect.value : "N/A";
 
-            // Prepare the data for Google Sheets
-            const data = {
-                name: name,
-                email: email,
-                size: size,
-                event: eventName
-            };
+            // Prepare CSV row
+            const csvRow = `${eventName},${name},${email},${size}\n`;
 
-            // Call Google Sheets API to save the data
-            appendToSheet(data);
+            // Check if a CSV file already exists in local storage
+            let csvContent = localStorage.getItem("sosfiles");
+            if (!csvContent) {
+                csvContent = "Event Name,Name,Email,T-shirt Size\n"; // CSV Header
+            }
+            csvContent += csvRow;
+
+            // Save to local storage
+            localStorage.setItem("sosfiles", csvContent);
+
+            // Trigger file download
+            const blob = new Blob([csvContent], { type: "text/csv" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "sosfiles.csv";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            alert("Signup successful! The CSV file 'sosfiles.csv' has been updated.");
         }
-
-        function appendToSheet(data) {
-            // Make sure you have your Google Sheets API client set up correctly and authenticated
-            gapi.client.sheets.spreadsheets.values.append({
-                spreadsheetId: spreadsheetId,
-                range: 'Sheet1!A:D', // The range where you want to append the data
-                valueInputOption: 'RAW',
-                resource: {
-                    values: [
-                        [data.event, data.name, data.email, data.size]
-                    ]
-                }
-            }).then(function(response) {
-                alert('Signup successful! Data has been added to Google Sheets.');
-            }).catch(function(error) {
-                console.error('Error adding data to Google Sheets:', error);
-                alert('There was an error while submitting the form. Please try again.');
-            });
-        }
-
-        // Load the Google API Client
-        function start() {
-            gapi.client.init({
-                apiKey: 'AIzaSyDG9-hseAbbLFP6Nuywt-F7Fb-da_-Qk5M', // Replace with your actual API key
-                clientId: '271847209558-3g4oc9jplip7b0dg7vf83n73etoolboh.apps.googleusercontent.com', // Replace with your actual client ID
-                discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-                scope: "https://www.googleapis.com/auth/spreadsheets"
-            }).then(function () {
-                // Google Sheets API is ready
-                console.log('Google Sheets API is ready.');
-            });
-        }
-
-        // Load the Google API client when the page loads
-        gapi.load('client:auth2', start);
     </script>
-
-    <script async defer src="https://apis.google.com/js/api.js"></script>
 </body>
 </html>
